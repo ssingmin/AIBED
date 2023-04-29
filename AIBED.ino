@@ -1,7 +1,9 @@
+#include <Adafruit_ADS1X15.h>
+
 #include <math.h>
 #include "DHT.h"
 #include <Wire.h>
-#include <ADS1115-Driver.h>
+// #include <ADS1115-Driver.h>
 
 #define RELAY_STARTPIN 39
 #define RELAY_NUM 15
@@ -14,22 +16,12 @@
 #define DHTPIN 2        // 데이터 입력 핀의 설정
 #define DHTTYPE DHT22   // DHT22 (AM2302) 센서종류 설정
  
+ Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
-ADS1115 ads1115 = ADS1115(ADS1115_I2C_ADDR_SDA);
+// ADS1115 ads1115 = ADS1115(ADS1115_I2C_ADDR_SDA);
 
 
 double R1 = 7680;//value of R1 resistor. R2 is thermistor
-
-uint16_t readValue(uint8_t input) {
-	ads1115.setMultiplexer(input);
-	ads1115.startSingleConvertion();
-
-	delayMicroseconds(25); // The ADS1115 needs to wake up from sleep mode and usually it takes 25 uS to do that
-
-	while (ads1115.getOperationalStatus() == 0);
-
-	return ads1115.readConvertedValue();
-}
 
 double ThermisterScan(int RawADC){
 
@@ -56,35 +48,25 @@ void setup() {
   for(int i=0;i<RELAY_NUM;i++) {pinMode(i+RELAY_STARTPIN, OUTPUT);}
   
   dht.begin();
-  
-  ads1115.reset();
-	ads1115.setDeviceMode(ADS1115_MODE_SINGLE);
-	ads1115.setDataRate(ADS1115_DR_250_SPS);
-	ads1115.setPga(ADS1115_PGA_4_096);
 
+  ads1115.begin();  // Initialize ads1115 at address 0x49
   Serial.begin(115200);
 }
 
 // the loop function runs over and over again forever
 void loop() {
 
+int16_t adc0, adc1, adc2, adc3;
 
-	uint16_t value0 = readValue(ADS1115_MUX_AIN0_GND);
-	uint16_t value1 = readValue(ADS1115_MUX_AIN1_GND);
-	uint16_t value2 = readValue(ADS1115_MUX_AIN2_GND);
-	uint16_t value3 = readValue(ADS1115_MUX_AIN3_GND);
-
-	Serial.println("Values: ");
-	Serial.print("IN 0: ");
-	Serial.print(value0);
-	Serial.print(" IN 1: ");
-	Serial.print(value1);
-	Serial.print(" IN 2: ");
-	Serial.print(value2);
-	Serial.print(" IN 3: ");
-	Serial.print(value3);
-	Serial.print("");
-
+  adc0 = ads1115.readADC_SingleEnded(0);
+  adc1 = ads1115.readADC_SingleEnded(1);
+  adc2 = ads1115.readADC_SingleEnded(2);
+  adc3 = ads1115.readADC_SingleEnded(3);
+  Serial.print("AIN0:"); Serial.print(adc0);
+  Serial.print(" AIN1:"); Serial.print(adc1);
+  Serial.print(" AIN2:"); Serial.print(adc2);
+  Serial.print(" AIN3:"); Serial.println(adc3);
+  Serial.println(" ");
   
   float h = dht.readHumidity();
   float t = dht.readTemperature();
@@ -95,12 +77,12 @@ void loop() {
   }
   else {
     //온도, 습도 표시 시리얼 모니터 출력
-    Serial.print("Humidity: "); 
-    Serial.print(h);
-    Serial.print(" %\t");
-    Serial.print("Temperature: "); 
-    Serial.print(t);
-    Serial.println(" *C");
+    // Serial.print("Humidity: "); 
+    // Serial.print(h);
+    // Serial.print(" %\t");
+    // Serial.print("Temperature: "); 
+    // Serial.print(t);
+    // Serial.println(" *C");
   }
   
   digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
@@ -114,12 +96,14 @@ void loop() {
     delay(100);       // wait for a second   
   }
   Serial.println(" hihi  ");
-  double temp = ThermisterScan(analogRead(10));
+//  double temp = ThermisterScan(analogRead(10));
+  adc0 = map(adc0, 0,26230,0,1023);
+  double temp = ThermisterScan(adc0);
   int press = pressureScan(analogRead(0));
 
-  // Serial.print("Temperature is : ");
-  // Serial.print(temp);
-  // Serial.println(" C  ");
+  Serial.print("Temperature is : ");
+  Serial.print(temp);
+  Serial.println(" C  ");
 
   // Serial.print("pressure is : ");
   // Serial.print(press);
