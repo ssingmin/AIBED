@@ -3,7 +3,6 @@
 #include <math.h>
 #include "DHT.h"
 #include <Wire.h>
-// #include <ADS1115-Driver.h>
 
 #define RELAY_STARTPIN 39
 #define RELAY_NUM 15
@@ -15,13 +14,22 @@
 
 #define DHTPIN 2        // 데이터 입력 핀의 설정
 #define DHTTYPE DHT22   // DHT22 (AM2302) 센서종류 설정
- 
- Adafruit_ADS1115 ads1115;	// Construct an ads1115 
+
+#define LENGTH 42
+Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
-// ADS1115 ads1115 = ADS1115(ADS1115_I2C_ADDR_SDA);
 
 
 double R1 = 7680;//value of R1 resistor. R2 is thermistor
+uint8_t msg[LENGTH] = {255,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41};
+
+float dht_h;
+float dht_t;
+
+int16_t adc0, adc1, adc2, adc3;
+
+double temp[10];
+uint8_t press[10];
 
 double ThermisterScan(int RawADC){
 
@@ -55,58 +63,93 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+  dht_h = dht.readHumidity();
+  dht_t = dht.readTemperature();
 
-int16_t adc0, adc1, adc2, adc3;
+  // adc0 = map(adc0, 0,26230,0,1023);
+  // double temp = ThermisterScan(adc0);
+  // int press = pressureScan(analogRead(0));
 
-  adc0 = ads1115.readADC_SingleEnded(0);
-  adc1 = ads1115.readADC_SingleEnded(1);
-  adc2 = ads1115.readADC_SingleEnded(2);
-  adc3 = ads1115.readADC_SingleEnded(3);
-  Serial.print("AIN0:"); Serial.print(adc0);
-  Serial.print(" AIN1:"); Serial.print(adc1);
-  Serial.print(" AIN2:"); Serial.print(adc2);
-  Serial.print(" AIN3:"); Serial.println(adc3);
-  Serial.println(" ");
-  
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
 
-  if (isnan(t) || isnan(h)) {
-    //값 읽기 실패시 시리얼 모니터 출력
-    Serial.println("Failed to read from DHT");
-  }
-  else {
-    //온도, 습도 표시 시리얼 모니터 출력
-    // Serial.print("Humidity: "); 
-    // Serial.print(h);
-    // Serial.print(" %\t");
-    // Serial.print("Temperature: "); 
-    // Serial.print(t);
-    // Serial.println(" *C");
-  }
-  
-  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  for(int i=0;i<RELAY_NUM;i++){
-    digitalWrite(i+RELAY_STARTPIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-    delay(100);       // wait for a second    
-  }
-  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW 
-  for(int i=0;i<RELAY_NUM;i++){
-    digitalWrite(i+RELAY_STARTPIN, LOW);  // turn the LED on (HIGH is the voltage level)
-    delay(100);       // wait for a second   
-  }
-  Serial.println(" hihi  ");
-//  double temp = ThermisterScan(analogRead(10));
-  adc0 = map(adc0, 0,26230,0,1023);
-  double temp = ThermisterScan(adc0);
-  int press = pressureScan(analogRead(0));
+// for(int i=0;i<10;i++){
+//   press[i] = pressureScan(analogRead(i));
+// }
 
+for(int i=10;i<16;i++){
+  temp[i-10] = ThermisterScan(analogRead(i));
+}
+uint16_t tmp = (uint16_t)(temp[0]*10);
   Serial.print("Temperature is : ");
-  Serial.print(temp);
+  for(int i=0;i<6;i++){Serial.print(temp[i]);Serial.print(" ");}
+  Serial.print(tmp);
+  Serial.print(" ");
+  msg[1]=(uint8_t)(tmp>>8);
+  msg[2]=(uint8_t)tmp;
+  Serial.print(msg[1]);
+  Serial.print(" ");
+  Serial.print(msg[2]);
   Serial.println(" C  ");
+
+  // adc0 = ads1115.readADC_SingleEnded(0);
+  // adc1 = ads1115.readADC_SingleEnded(1);
+  // adc2 = ads1115.readADC_SingleEnded(2);
+  // adc3 = ads1115.readADC_SingleEnded(3);
+  // Serial.print("AIN0:"); Serial.print(adc0);
+  // Serial.print(" AIN1:"); Serial.print(adc1);
+  // Serial.print(" AIN2:"); Serial.print(adc2);
+  // Serial.print(" AIN3:"); Serial.println(adc3);
+  // Serial.println(" ");
+  
+
+  // if (isnan(dht_t) || isnan(dht_h)) {
+  //   //값 읽기 실패시 시리얼 모니터 출력
+  //   Serial.println("Failed to read from DHT");
+  // }
+  // else {
+  //   //온도, 습도 표시 시리얼 모니터 출력
+  //   Serial.print("Humidity: "); 
+  //   Serial.print(dht_h);
+  //   Serial.print(" %\t");
+  //   Serial.print("Temperature: "); 
+  //   Serial.print(dht_t);
+  //   Serial.println(" *C");
+    
+  //   // msg[21] = dht_t;
+  //   // msg[22] = dht_h;
+  // }
+  
+
+
+//  double temp = ThermisterScan(analogRead(10));
+  // adc0 = map(adc0, 0,26230,0,1023);
+  // double temp = ThermisterScan(adc0);
+  // int press = pressureScan(analogRead(0));
+
+  // Serial.print("Temperature is : ");
+  // Serial.print(temp);
+  // Serial.println(" C  ");
 
   // Serial.print("pressure is : ");
   // Serial.print(press);
   // Serial.println(" % ");
+  //send msg
+
+  //contorl DC relay 
+  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+  for(int i=0;i<RELAY_NUM;i++){
+    digitalWrite(i+RELAY_STARTPIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+    delay(50);       // wait for a second    
+  }
+  
+  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW 
+  for(int i=0;i<RELAY_NUM;i++){
+    digitalWrite(i+RELAY_STARTPIN, LOW);  // turn the LED on (HIGH is the voltage level)
+    delay(50);       // wait for a second   
+  }
+
+
+  //for(int i=0;i<LENGTH;i++){Serial.write(msg[i]);}//send msg to pc
+
+
 
 }
