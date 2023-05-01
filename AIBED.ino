@@ -25,6 +25,7 @@
 #define LEG_DN 0x10
 #define BED_UP 0x08
 #define BED_DN 0x04
+#define LIGHT 0x02
 /////////
 //msg[36]
 #define UVB   0x80
@@ -45,7 +46,7 @@ DHT dht(DHTPIN, DHTTYPE);
 
 
 double R1 = 7680;//value of R1 resistor. R2 is thermistor
-uint8_t msg[LENGTH] = {255,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,0,0,0,38,39,40,41};
+uint8_t msg[LENGTH] = {255,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,0,0,0,38,39,40,41,42,43,44};
 
 float dht_h;
 float dht_t;
@@ -59,6 +60,8 @@ uint16_t tmp;
 uint8_t toogle=0;
 
 uint8_t rev_msg[9] = {0,};
+
+uint8_t volume[5] = {0,};
 
 double ThermisterScan(int RawADC){
 
@@ -164,6 +167,12 @@ if (Serial.available() > 0) {
       msg[40] = rev_msg[5];
       msg[41] = rev_msg[6];
       msg[42] = rev_msg[7];
+      volume[0] = msg[38];
+      volume[1] = msg[39];
+      volume[2] = msg[40];
+      volume[3] = msg[41];
+      volume[4] = msg[42];
+
 
       Serial.write(255);
       Serial.write(255);
@@ -185,6 +194,7 @@ if (Serial.available() > 0) {
   digitalWrite(42, (msg[35]&LEG_DN));  //4
   digitalWrite(43, (msg[35]&BED_UP));  //3
   digitalWrite(44, (msg[35]&BED_DN));  //2
+  digitalWrite(38, (msg[35]&LIGHT));  //1
   digitalWrite(45, (msg[36]&UVB));  //7
   digitalWrite(46, (msg[36]&LEDR));  //6
   digitalWrite(47, (msg[36]&LEDG));  //5
@@ -195,8 +205,18 @@ if (Serial.available() > 0) {
   digitalWrite(52, (msg[37]&SOL4));  //7
   digitalWrite(53, (msg[37]&SOL5));  //6 
 
-  for(int i=0;i<LENGTH;i++){Serial.write(msg[i]);}//send msg to pc
 
+  Serial.print("COM+V");
+  Serial.print(volume[0]);
+
+  //for(int i=0;i<LENGTH;i++){Serial.write(msg[i]);}//send msg to pc
+  //send msg to pc
+  for (int i = 0; i < LENGTH; i++) {
+    
+    Serial.print(msg[i]);
+    Serial.print(";");    
+  }
+  Serial.println();
   delay(1000);
 
 }
