@@ -91,6 +91,7 @@ void setup() {
 
   ads1115.begin();  // Initialize ads1115 at address 0x49
   Serial.begin(115200);
+  Serial1.begin(9600);
 }
 
 
@@ -206,8 +207,8 @@ if (Serial.available() > 0) {
   digitalWrite(53, (msg[37]&SOL5));  //6 
 
 
-  Serial.print("COM+V");
-  Serial.print(volume[0]);
+  Serial1.print("COM+V");
+  Serial1.print(volume[0]);
 
   //for(int i=0;i<LENGTH;i++){Serial.write(msg[i]);}//send msg to pc
   //send msg to pc
