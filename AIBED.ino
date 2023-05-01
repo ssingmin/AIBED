@@ -168,11 +168,11 @@ if (Serial.available() > 0) {
       msg[40] = rev_msg[5];
       msg[41] = rev_msg[6];
       msg[42] = rev_msg[7];
-      volume[0] = msg[38];
-      volume[1] = msg[39];
-      volume[2] = msg[40];
-      volume[3] = msg[41];
-      volume[4] = msg[42];
+      volume[0] = msg[38]/6.25;
+      volume[1] = msg[39]/6.25;
+      volume[2] = msg[40]/6.25;
+      volume[3] = msg[41]/6.25;
+      volume[4] = msg[42]/6.25;
 
 
       Serial.write(255);
@@ -208,8 +208,12 @@ if (Serial.available() > 0) {
 
 
   Serial1.print("COM+V");
-  Serial1.print(volume[0]);
-
+  uint8_t tmp_vol[2];
+  tmp_vol[0] = volume[0]/10;
+  tmp_vol[1] = volume[0]%10;
+  
+  Serial1.print(tmp_vol[0]);
+  Serial1.print(tmp_vol[1]);
   //for(int i=0;i<LENGTH;i++){Serial.write(msg[i]);}//send msg to pc
   //send msg to pc
   for (int i = 0; i < LENGTH; i++) {
