@@ -17,28 +17,28 @@
 
 #define LENGTH 45
 
-//msg[35]
-#define BODY_UP 7
-#define BODY_DN 6
-#define LEG_UP 5
-#define LEG_DN 4
-#define BED_UP 3
-#define BED_DN 2
+
+  //msg[35]
+#define BODY_UP 0x80
+#define BODY_DN 0x40
+#define LEG_UP 0x20
+#define LEG_DN 0x10
+#define BED_UP 0x08
+#define BED_DN 0x04
 /////////
 //msg[36]
-#define UVB   7
-#define LEDR  6
-#define LEDG  5
-#define LEDB  4
-#define SOL1  3
-#define SOL2  2
-#define SOL3  1
+#define UVB   0x80
+#define LEDR  0x40
+#define LEDG  0x20
+#define LEDB  0x10
+#define SOL1  0x08
+#define SOL2  0x04
+#define SOL3  0x02
 /////////
 //msg[37]
-#define SOL4  7
-#define SOL5  6
+#define SOL4  0x80
+#define SOL5  0x40
 /////////
-
 
 Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
@@ -97,55 +97,55 @@ void loop() {
   digitalWrite(LED_BUILTIN, toogle);  // turn the LED on (HIGH is the voltage level)
 
 //scan temp of thermistor//
-  for(int i=10;i<16;i++){temp[i-10] = ThermisterScan(analogRead(i));}
+//   for(int i=10;i<16;i++){temp[i-10] = ThermisterScan(analogRead(i));}
 
-  for(int i=0;i<4;i++){
-    adc[i] = ads1115.readADC_SingleEnded(i);
-    adc[i] = map(adc[i], 0,26230,0,1023);
-    temp[i+6] = ThermisterScan(adc[i]);
-  }
+//   for(int i=0;i<4;i++){
+//     adc[i] = ads1115.readADC_SingleEnded(i);
+//     adc[i] = map(adc[i], 0,26230,0,1023);
+//     temp[i+6] = ThermisterScan(adc[i]);
+//   }
 
-  for(int i=0;i<10;i++)
-  {
-    tmp = (uint16_t)(temp[i]*10);
-    msg[2*i + 1]=(uint8_t)(tmp>>8);
-    msg[2*i + 2]=(uint8_t)tmp;
-  }
+//   for(int i=0;i<10;i++)
+//   {
+//     tmp = (uint16_t)(temp[i]*10);
+//     msg[2*i + 1]=(uint8_t)(tmp>>8);
+//     msg[2*i + 2]=(uint8_t)tmp;
+//   }
 
-///////////////////////////
+// ///////////////////////////
 
-//scan pressure of ra12a///
-  for(int i=0;i<10;i++){
-    press[i] = pressureScan(analogRead(i));
-    msg[i+21] = press[i];
-  }
-///////////////////////////  
+// //scan pressure of ra12a///
+//   for(int i=0;i<10;i++){
+//     press[i] = pressureScan(analogRead(i));
+//     msg[i+21] = press[i];
+//   }
+// ///////////////////////////  
 
-//////scan data of dht/////
-  dht_h = dht.readHumidity();
-  dht_t = dht.readTemperature();
+// //////scan data of dht/////
+//   dht_h = dht.readHumidity();
+//   dht_t = dht.readTemperature();
 
-  if (isnan(dht_t) || isnan(dht_h)) {
-    //값 읽기 실패시 시리얼 모니터 출력
-    Serial.println("Failed to read from DHT");
-  }
-  else {
-    //온도, 습도 표시 시리얼 모니터 출력
-    // Serial.print("Humidity: "); 
-    // Serial.print(dht_h);
-    // Serial.print(" %\t");
-    // Serial.print("Temperature: "); 
-    // Serial.print(dht_t);
-    // Serial.println(" *C");
+//   if (isnan(dht_t) || isnan(dht_h)) {
+//     //값 읽기 실패시 시리얼 모니터 출력
+//     Serial.println("Failed to read from DHT");
+//   }
+//   else {
+//     //온도, 습도 표시 시리얼 모니터 출력
+//     // Serial.print("Humidity: "); 
+//     // Serial.print(dht_h);
+//     // Serial.print(" %\t");
+//     // Serial.print("Temperature: "); 
+//     // Serial.print(dht_t);
+//     // Serial.println(" *C");
 
-    tmp = (uint16_t)(dht_t*10);
-    msg[31]=(uint8_t)(tmp>>8);
-    msg[32]=(uint8_t)tmp;
+//     tmp = (uint16_t)(dht_t*10);
+//     msg[31]=(uint8_t)(tmp>>8);
+//     msg[32]=(uint8_t)tmp;
 
-    tmp = (uint16_t)(dht_h*10);
-    msg[33]=(uint8_t)(tmp>>8);
-    msg[34]=(uint8_t)tmp;
-  }
+//     tmp = (uint16_t)(dht_h*10);
+//     msg[33]=(uint8_t)(tmp>>8);
+//     msg[34]=(uint8_t)tmp;
+//   }
 
 /////////////////////////// 
   
@@ -178,27 +178,35 @@ if (Serial.available() > 0) {
   // Serial.println("");
 
   //contorl DC relay 
-  digitalWrite(39, (msg[35]>>BODY_UP)*1);  //1
-  digitalWrite(40, (msg[35]>>BODY_DN)*1);  //2
-  digitalWrite(41, (msg[35]>>LEG_UP)*1);  //3
-  digitalWrite(42, (msg[35]>>LEG_DN)*1);  //4
-  digitalWrite(43, (msg[35]>>BED_UP)*1);  //5
-  digitalWrite(44, (msg[35]>>BED_DN)*1);  //6
-  digitalWrite(45, (msg[36]>>UVB)*1);  //7
-  digitalWrite(46, (msg[36]>>LEDR)*1);  //8
-  digitalWrite(47, (msg[36]>>LEDG)*1);  //9
-  digitalWrite(48, (msg[36]>>LEDB)*1);  //10
-  digitalWrite(49, (msg[36]>>SOL1)*1);  //11
-  digitalWrite(50, (msg[36]>>SOL2)*1);  //12
-  digitalWrite(51, (msg[36]>>SOL3)*1);  //13
-  digitalWrite(52, (msg[36]>>SOL4)*1);  //14
-  digitalWrite(53, (msg[37]>>SOL5)*1);  //15  
+    // digitalWrite(39, (msg[35]&0x80));  //7
+  // digitalWrite(40, (msg[35]&0x40));  //6
+  // digitalWrite(41, (msg[35]&0x20));  //5
+  // digitalWrite(42, (msg[35]&0x10));  //4
+  // digitalWrite(43, (msg[35]&0x08));  //3
+  // digitalWrite(44, (msg[35]&0x04));  //2
+
+  digitalWrite(39, (msg[35]&BODY_UP));  //7
+  digitalWrite(40, (msg[35]&BODY_DN));  //6
+  digitalWrite(41, (msg[35]&LEG_UP));  //5
+  digitalWrite(42, (msg[35]&LEG_DN));  //4
+  digitalWrite(43, (msg[35]&BED_UP));  //3
+  digitalWrite(44, (msg[35]&BED_DN));  //2
+  digitalWrite(45, (msg[36]&UVB));  //7
+  digitalWrite(46, (msg[36]&LEDR));  //6
+  digitalWrite(47, (msg[36]&LEDG));  //5
+  digitalWrite(48, (msg[36]&LEDB));  //4
+  digitalWrite(49, (msg[36]&SOL1));  //3
+  digitalWrite(50, (msg[36]&SOL2));  //2
+  digitalWrite(51, (msg[36]&SOL3));  //1
+  digitalWrite(52, (msg[37]&SOL4));  //7
+  digitalWrite(53, (msg[37]&SOL5));  //6 
 
 
 
   for(int i=0;i<LENGTH;i++){Serial.write(msg[i]);}//send msg to pc
 
 
+  delay(1000);
 
 }
 
