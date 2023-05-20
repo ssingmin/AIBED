@@ -90,7 +90,7 @@ void setup() {
   dht.begin();
 
   ads1115.begin();  // Initialize ads1115 at address 0x49
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial1.begin(9600);
 }
 
@@ -99,7 +99,7 @@ void loop() {
 
   toogle ^= 1; 
   digitalWrite(LED_BUILTIN, toogle);  // turn the LED on (HIGH is the voltage level)
-
+#if 0
 //scan temp of thermistor//
   for(int i=10;i<16;i++){temp[i-10] = ThermisterScan(analogRead(i));}
 
@@ -152,8 +152,34 @@ void loop() {
   }
 
 /////////////////////////// 
-  
-  //parsing//
+  #endif
+
+  //temp
+  for(int i=0;i<10;i++){temp[i]=36.5;}
+    for(int i=0;i<10;i++)
+  {
+    tmp = (uint16_t)(temp[i]*10);
+    msg[2*i + 1]=(uint8_t)(tmp>>8);
+    msg[2*i + 2]=(uint8_t)tmp;
+  }
+    for(int i=0;i<10;i++){
+    msg[i+21] = 50;
+  }
+
+    tmp = (uint16_t)(dht_t*10);
+    msg[31]=(uint8_t)(tmp>>8);
+    msg[32]=(uint8_t)tmp;
+
+    tmp = (uint16_t)(dht_h*10);
+    msg[33]=(uint8_t)(tmp>>8);
+    msg[34]=(uint8_t)tmp;
+  //////
+
+
+/////////////////////////// 
+
+
+ //parsing//
 if (Serial.available() > 0) { 
     if (Serial.read() == 255) {
       for (int i=0;i<8;i++) { 
@@ -207,22 +233,25 @@ if (Serial.available() > 0) {
   digitalWrite(53, (msg[37]&SOL5));  //6 
 
 
-  Serial1.print("COM+V");
+  //Serial1.print("COM+V");
   uint8_t tmp_vol[2];
   tmp_vol[0] = volume[0]/10;
   tmp_vol[1] = volume[0]%10;
+  if(toogle == 1){tmp_vol[1] = 9;tmp_vol[0] = 0;}
+  else{tmp_vol[1] = 5;tmp_vol[0] = 1;}
   
+
   Serial1.print(tmp_vol[0]);
   Serial1.print(tmp_vol[1]);
   //for(int i=0;i<LENGTH;i++){Serial.write(msg[i]);}//send msg to pc
   //send msg to pc
   for (int i = 0; i < LENGTH; i++) {
     
-    Serial.print(msg[i]);
-    Serial.print(";");    
+    // Serial.print(msg[i]);
+    // Serial.print(";");    
   }
   Serial.println();
-  delay(1000);
+  delay(5000);
 
 }
 
