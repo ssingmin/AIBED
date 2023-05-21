@@ -51,6 +51,10 @@ uint8_t msg[LENGTH] = {255,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
 float dht_h;
 float dht_t;
 
+
+int8_t Co2Tx[4]={0x11,0x01,0x01,0xED};
+int8_t Co2Rx[8]={0,};
+
 int16_t adc[4];
 
 double temp[10];
@@ -92,6 +96,7 @@ void setup() {
   ads1115.begin();  // Initialize ads1115 at address 0x49
   Serial.begin(9600);
   Serial1.begin(9600);
+  Serial2.begin(9600);
 }
 
 
@@ -153,7 +158,21 @@ void loop() {
 
 /////////////////////////// 
   #endif
+//scan CO2 data
 
+  for (int i = 0; i < 4; i++) {Serial2.write(Co2Tx[i]);}
+  delay(15);
+    if(Serial2.available() > 0) { 
+      for (int i=0;i<8;i++) { 
+        while (Serial2.available() == 0) {      Serial.print(33);} 
+        Co2Rx[i] = Serial2.read(); 
+      }
+    }
+    for (int i = 0; i < 8; i++) {Serial.print(Co2Rx[i]);Serial.print(" ");}
+
+    msg[43]=Co2Rx[3];
+    msg[44]=Co2Rx[4];
+//16 05 01 0d 47 00 95 fb
   //temp
   for(int i=0;i<10;i++){temp[i]=36.5;}
     for(int i=0;i<10;i++)
@@ -173,6 +192,17 @@ void loop() {
     tmp = (uint16_t)(dht_h*10);
     msg[33]=(uint8_t)(tmp>>8);
     msg[34]=(uint8_t)tmp;
+
+  digitalWrite(49, 1);  //1
+  delay(500);
+  digitalWrite(50, 1);  //2
+  delay(500);
+  digitalWrite(51, 1);  //3
+  delay(500);
+  digitalWrite(52, 1);  //4
+  delay(500);
+  digitalWrite(53, 1);  //5
+  delay(500);
   //////
 
 
@@ -201,8 +231,8 @@ if (Serial.available() > 0) {
       volume[4] = msg[42]/6.25;
 
 
-      Serial.write(255);
-      Serial.write(255);
+      Serial.print(255);
+      Serial.print(255);
       for (int i=0;i<8;i++) {rev_msg[i]=0;}
     }
   }
@@ -214,7 +244,7 @@ if (Serial.available() > 0) {
   // Serial.println("");
 
   //contorl DC relay 
-
+#if 0
   digitalWrite(39, (msg[35]&BODY_UP));  //7
   digitalWrite(40, (msg[35]&BODY_DN));  //6
   digitalWrite(41, (msg[35]&LEG_UP));  //5
@@ -231,6 +261,7 @@ if (Serial.available() > 0) {
   digitalWrite(51, (msg[36]&SOL3));  //1
   digitalWrite(52, (msg[37]&SOL4));  //7
   digitalWrite(53, (msg[37]&SOL5));  //6 
+#endif
 
 
   //Serial1.print("COM+V");
