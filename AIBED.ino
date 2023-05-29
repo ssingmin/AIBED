@@ -44,6 +44,10 @@
 Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
 
+uint32_t testcounter = 11;
+uint32_t onoffcounter = 0;
+
+uint8_t tmp_vol[2];
 
 double R1 = 7680;//value of R1 resistor. R2 is thermistor
 uint8_t msg[LENGTH] = {255,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,0,0,0,38,39,40,41,42,43,44};
@@ -101,10 +105,10 @@ void setup() {
 
 
 void loop() {
-
+  testcounter++;
   toogle ^= 1; 
   digitalWrite(LED_BUILTIN, toogle);  // turn the LED on (HIGH is the voltage level)
-#if 0
+#if 1
 //scan temp of thermistor//
   for(int i=10;i<16;i++){temp[i-10] = ThermisterScan(analogRead(i));}
 
@@ -164,15 +168,16 @@ void loop() {
   delay(15);
     if(Serial2.available() > 0) { 
       for (int i=0;i<8;i++) { 
-        while (Serial2.available() == 0) {      Serial.print(33);} 
+        while (Serial2.available() == 0) { } 
         Co2Rx[i] = Serial2.read(); 
       }
     }
-    for (int i = 0; i < 8; i++) {Serial.print(Co2Rx[i]);Serial.print(" ");}
+  //  for (int i = 0; i < 8; i++) {Serial.print(Co2Rx[i]);Serial.print(" ");}
 
     msg[43]=Co2Rx[3];
     msg[44]=Co2Rx[4];
 //16 05 01 0d 47 00 95 fb
+#if 0
   //temp
   for(int i=0;i<10;i++){temp[i]=36.5;}
     for(int i=0;i<10;i++)
@@ -193,16 +198,49 @@ void loop() {
     msg[33]=(uint8_t)(tmp>>8);
     msg[34]=(uint8_t)tmp;
 
-  digitalWrite(49, 1);  //1
-  delay(500);
-  digitalWrite(50, 1);  //2
-  delay(500);
-  digitalWrite(51, 1);  //3
-  delay(500);
-  digitalWrite(52, 1);  //4
-  delay(500);
-  digitalWrite(53, 1);  //5
-  delay(500);
+
+  // if(testcounter == 12){
+  //   testcounter = 0;
+    
+  //   if(onoffcounter == 5){onoffcounter = 0;}
+  //   if(onoffcounter==0){
+  //     digitalWrite(49, 1);  //1
+  //     digitalWrite(50, 0);  //2
+  //     digitalWrite(51, 0);  //3
+  //     digitalWrite(52, 0);  //4
+  //     digitalWrite(53, 0);  //5
+  //   }
+  //   if(onoffcounter==1){
+  //     digitalWrite(49, 0);  //1
+  //     digitalWrite(50, 1);  //2
+  //     digitalWrite(51, 0);  //3
+  //     digitalWrite(52, 0);  //4
+  //     digitalWrite(53, 0);  //5
+  //   }
+  //   if(onoffcounter==2){
+  //     digitalWrite(49, 0);  //1
+  //     digitalWrite(50, 0);  //2
+  //     digitalWrite(51, 1);  //3
+  //     digitalWrite(52, 0);  //4
+  //     digitalWrite(53, 0);  //5      
+  //   }
+  //   if(onoffcounter==3){
+  //     digitalWrite(49, 0);  //1
+  //     digitalWrite(50, 0);  //2
+  //     digitalWrite(51, 0);  //3
+  //     digitalWrite(52, 1);  //4
+  //     digitalWrite(53, 0);  //5     
+  //   }
+  //   if(onoffcounter==4){
+  //     digitalWrite(49, 0);  //1
+  //     digitalWrite(50, 0);  //2
+  //     digitalWrite(51, 0);  //3
+  //     digitalWrite(52, 0);  //4
+  //     digitalWrite(53, 1);  //5     
+  //   }
+  //   onoffcounter++;
+  // }
+#endif
   //////
 
 
@@ -224,11 +262,11 @@ if (Serial.available() > 0) {
       msg[40] = rev_msg[5];
       msg[41] = rev_msg[6];
       msg[42] = rev_msg[7];
-      volume[0] = msg[38]/6.25;
-      volume[1] = msg[39]/6.25;
-      volume[2] = msg[40]/6.25;
-      volume[3] = msg[41]/6.25;
-      volume[4] = msg[42]/6.25;
+      volume[0] = msg[38];//0~15
+      volume[1] = msg[39];//0~15
+      volume[2] = msg[40];//0~15
+      volume[3] = msg[41];//0~15
+      volume[4] = msg[42];//0~15
 
 
       Serial.print(255);
@@ -236,15 +274,10 @@ if (Serial.available() > 0) {
       for (int i=0;i<8;i++) {rev_msg[i]=0;}
     }
   }
-  // for(int i=0;i<8;i++){Serial.print(rev_msg[i]);Serial.print(" ");}
-  // Serial.println("");
-  ///////////
 
-  //for(int i=0;i<=42;i++){Serial.print(msg[i]);Serial.print(" ");}
-  // Serial.println("");
 
   //contorl DC relay 
-#if 0
+#if 1
   digitalWrite(39, (msg[35]&BODY_UP));  //7
   digitalWrite(40, (msg[35]&BODY_DN));  //6
   digitalWrite(41, (msg[35]&LEG_UP));  //5
@@ -263,26 +296,35 @@ if (Serial.available() > 0) {
   digitalWrite(53, (msg[37]&SOL5));  //6 
 #endif
 
+  
+  
+  for(int j=0;j<5;j++)
+  {
+    tmp_vol[0] = volume[j]/10;
+    tmp_vol[1] = volume[j]%10;
 
-  //Serial1.print("COM+V");
-  uint8_t tmp_vol[2];
-  tmp_vol[0] = volume[0]/10;
-  tmp_vol[1] = volume[0]%10;
-  if(toogle == 1){tmp_vol[1] = 9;tmp_vol[0] = 0;}
-  else{tmp_vol[1] = 5;tmp_vol[0] = 1;}
+    for(int i=0;i<5;i++){  
+      Serial1.print(tmp_vol[0]);
+      Serial1.print(tmp_vol[1]);
+      delay(5);
+    }
+  }
   
 
-  Serial1.print(tmp_vol[0]);
-  Serial1.print(tmp_vol[1]);
+  // if(toogle == 1){tmp_vol[1] = 4;tmp_vol[0] = 0;}//for test
+  // else{tmp_vol[1] = 5;tmp_vol[0] = 1;}//for test
+  
+
+
   //for(int i=0;i<LENGTH;i++){Serial.write(msg[i]);}//send msg to pc
   //send msg to pc
   for (int i = 0; i < LENGTH; i++) {
     
-    // Serial.print(msg[i]);
-    // Serial.print(";");    
+    Serial.print(msg[i]);
+    Serial.print(";");    
   }
   Serial.println();
-  delay(5000);
+  delay(1000);
 
 }
 
