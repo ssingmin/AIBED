@@ -39,12 +39,19 @@
 //msg[37]
 #define SOL4  0x80
 #define SOL5  0x40
+#define TVUP  0x20
+#define TVDN  0x10
 /////////
 
 Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
 
-uint32_t testcounter = 11;
+const byte interruptPin = 3;
+
+uint8_t TVflag;
+uint8_t duration;
+
+uint32_t counter = 0;
 uint32_t onoffcounter = 0;
 
 uint8_t tmp_vol[2];
@@ -90,22 +97,36 @@ int pressureScan(int RawADC){
   return mfsr_r18;
 }
 
+
+
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
   for(int i=0;i<RELAY_NUM;i++) {pinMode(i+RELAY_STARTPIN, OUTPUT);}
-  
+  pinMode(2, OUTPUT);
+ 
+  //pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);
   dht.begin();
 
   ads1115.begin();  // Initialize ads1115 at address 0x49
   Serial.begin(9600);
   Serial1.begin(9600);
   Serial2.begin(9600);
+
+  pinMode(interruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), LimitSW, FALLING );
+  
+
+
+
 }
 
 
 void loop() {
-  testcounter++;
+  counter++;
   toogle ^= 1; 
   digitalWrite(LED_BUILTIN, toogle);  // turn the LED on (HIGH is the voltage level)
 #if 1
@@ -250,7 +271,7 @@ void loop() {
  //parsing//
 if (Serial.available() > 0) { 
     if (Serial.read() == 255) {
-      for (int i=0;i<8;i++) { 
+      for (int i=0;i<9;i++) { 
         while (Serial.available() == 0) {} 
         rev_msg[i] = Serial.read(); 
       }
@@ -262,6 +283,7 @@ if (Serial.available() > 0) {
       msg[40] = rev_msg[5];
       msg[41] = rev_msg[6];
       msg[42] = rev_msg[7];
+      duration = rev_msg[8];
       volume[0] = msg[38];//0~15
       volume[1] = msg[39];//0~15
       volume[2] = msg[40];//0~15
@@ -278,12 +300,27 @@ if (Serial.available() > 0) {
 
   //contorl DC relay 
 #if 1
+if(duration>0){
+  if(duration>10){duration=10;}
+  duration--;
   digitalWrite(39, (msg[35]&BODY_UP));  //7
   digitalWrite(40, (msg[35]&BODY_DN));  //6
   digitalWrite(41, (msg[35]&LEG_UP));  //5
   digitalWrite(42, (msg[35]&LEG_DN));  //4
   digitalWrite(43, (msg[35]&BED_UP));  //3
   digitalWrite(44, (msg[35]&BED_DN));  //2
+}
+
+else
+{
+  digitalWrite(39, 0);  //7
+  digitalWrite(40, 0);  //6
+  digitalWrite(41, 0);  //5
+  digitalWrite(42, 0);  //4
+  digitalWrite(43, 0);  //3
+  digitalWrite(44, 0);  //2
+}
+
   digitalWrite(38, (msg[35]&LIGHT));  //1
   digitalWrite(45, (msg[36]&UVB));  //7
   digitalWrite(46, (msg[36]&LEDR));  //6
@@ -293,13 +330,41 @@ if (Serial.available() > 0) {
   digitalWrite(50, (msg[36]&SOL2));  //2
   digitalWrite(51, (msg[36]&SOL3));  //1
   digitalWrite(52, (msg[37]&SOL4));  //7
-  digitalWrite(53, (msg[37]&SOL5));  //6 
+  digitalWrite(53, (msg[37]&SOL5));  //6
+
+  if(((msg[37]&TVUP)==0) && ((msg[37]&TVDN)==0)){
+
+    digitalWrite(4, 1);
+    delay(100);
+    digitalWrite(6, 0);//tv up stop
+    digitalWrite(4, 0);
+    digitalWrite(5, 0);//tv down stop
+      Serial.print("msgif[37]:"); 
+      Serial.println(msg[37]);   
+      TVflag = 1; 
+    }
+
+    if((((msg[37]&TVUP)!=0) || ((msg[37]&TVDN)!=0))  &&  (TVflag==1)){
+      digitalWrite(6, (msg[37]&TVUP));  
+      digitalWrite(5, (msg[37]&TVDN)); 
+      delay(100);
+      digitalWrite(6, 0);  
+      digitalWrite(5, 0); 
+      Serial.print("msgelse[37]:"); 
+      Serial.println(msg[37]);
+      TVflag = 0;
+    }
+
+    
+  
 #endif
 
   
   
   for(int j=0;j<5;j++)
   {
+    // Serial.print("volume[j]:");
+    // Serial.println(volume[j]);
     tmp_vol[0] = volume[j]/10;
     tmp_vol[1] = volume[j]%10;
 
@@ -324,7 +389,13 @@ if (Serial.available() > 0) {
     Serial.print(";");    
   }
   Serial.println();
-  delay(1000);
+  delay(245);//for 1sec
 
 }
 
+  void LimitSW() {
+  Serial.println("danger!!");
+  Serial.println("danger!!");
+  Serial.println("danger!!");
+  }
+  
