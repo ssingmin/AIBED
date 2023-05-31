@@ -19,12 +19,20 @@
 
 
   //msg[35]
-#define BODY_UP 0x80
-#define BODY_DN 0x40
-#define LEG_UP 0x20
-#define LEG_DN 0x10
-#define BED_UP 0x08
-#define BED_DN 0x04
+// #define BODY_UP 0x80
+// #define BODY_DN 0x40
+// #define LEG_UP 0x20
+// #define LEG_DN 0x10
+// #define BED_UP 0x08
+// #define BED_DN 0x04
+
+#define BED_DN 0x80
+#define LEG_DN 0x40
+#define BODY_DN 0x20
+#define BODY_UP 0x10
+#define LEG_UP 0x08
+#define BED_UP 0x04
+
 #define LIGHT 0x02
 /////////
 //msg[36]
@@ -46,7 +54,7 @@
 Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
 
-const byte interruptPin = 3;
+const byte LimitSWPin = 3;
 
 uint8_t TVflag;
 uint8_t duration;
@@ -116,16 +124,14 @@ void setup() {
   Serial1.begin(9600);
   Serial2.begin(9600);
 
-  pinMode(interruptPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), LimitSW, FALLING );
+  pinMode(LimitSWPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(LimitSWPin), LimitSW, FALLING);
   
-
-
-
 }
 
 
 void loop() {
+
   counter++;
   toogle ^= 1; 
   digitalWrite(LED_BUILTIN, toogle);  // turn the LED on (HIGH is the voltage level)
@@ -303,12 +309,17 @@ if (Serial.available() > 0) {
 if(duration>0){
   if(duration>10){duration=10;}
   duration--;
-  digitalWrite(39, (msg[35]&BODY_UP));  //7
-  digitalWrite(40, (msg[35]&BODY_DN));  //6
-  digitalWrite(41, (msg[35]&LEG_UP));  //5
-  digitalWrite(42, (msg[35]&LEG_DN));  //4
-  digitalWrite(43, (msg[35]&BED_UP));  //3
-  digitalWrite(44, (msg[35]&BED_DN));  //2
+  digitalWrite(39, (msg[35]&BED_DN));  //7
+  digitalWrite(40, (msg[35]&LEG_DN));  //6
+  digitalWrite(41, (msg[35]&BODY_DN));  //5
+  digitalWrite(42, (msg[35]&BODY_UP));  //4
+  digitalWrite(43, (msg[35]&LEG_UP));  //3
+  if(digitalRead(LimitSWPin))
+  {
+    Serial.print("danger!!");
+    digitalWrite(44, (msg[35]&BED_UP));  //2
+  }
+
 }
 
 else
@@ -324,8 +335,8 @@ else
   digitalWrite(38, (msg[35]&LIGHT));  //1
   digitalWrite(45, (msg[36]&UVB));  //7
   digitalWrite(46, (msg[36]&LEDR));  //6
-  digitalWrite(47, (msg[36]&LEDG));  //5
-  digitalWrite(48, (msg[36]&LEDB));  //4
+  digitalWrite(47, (msg[36]&LEDB));  //5
+  digitalWrite(48, (msg[36]&LEDG));  //4
   digitalWrite(49, (msg[36]&SOL1));  //3
   digitalWrite(50, (msg[36]&SOL2));  //2
   digitalWrite(51, (msg[36]&SOL3));  //1
@@ -389,13 +400,14 @@ else
     Serial.print(";");    
   }
   Serial.println();
-  delay(245);//for 1sec
+  delay(130);//for 1sec
 
 }
 
   void LimitSW() {
-  Serial.println("danger!!");
-  Serial.println("danger!!");
-  Serial.println("danger!!");
+  Serial.println("irq danger!!");
+//  digitalWrite(43, 0);  //3
+  digitalWrite(44, 0);  //3
+  duration = 0;
   }
   
