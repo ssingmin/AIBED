@@ -1,8 +1,21 @@
+
+/*todolist
+1. 침대 다중제어
+2. 220v 제어//조명, 펌프전원 , TV , 
+3. 485통신해결
+오프모드//공기가 없는상태
+온모드 //모두 빵빵한 상태
+교대부양모드// 135 24가 교차
+알람모드// 파도타기 
+////////*/
+
 #include <Adafruit_ADS1X15.h>
 
 #include <math.h>
 #include "DHT.h"
 #include <Wire.h>
+
+#define SHIFTTIME 300// 5 MINUTES
 
 #define RELAY_STARTPIN 39
 #define RELAY_NUM 15
@@ -131,7 +144,6 @@ void setup() {
 
 
 void loop() {
-
   counter++;
   toogle ^= 1; 
   digitalWrite(LED_BUILTIN, toogle);  // turn the LED on (HIGH is the voltage level)
@@ -284,12 +296,15 @@ if (Serial.available() > 0) {
       msg[35] = rev_msg[0];
       msg[36] = rev_msg[1];
       msg[37] = rev_msg[2];
+
       msg[38] = rev_msg[3];
       msg[39] = rev_msg[4];
       msg[40] = rev_msg[5];
       msg[41] = rev_msg[6];
       msg[42] = rev_msg[7];
+
       duration = rev_msg[8];
+
       volume[0] = msg[38];//0~15
       volume[1] = msg[39];//0~15
       volume[2] = msg[40];//0~15
@@ -303,11 +318,28 @@ if (Serial.available() > 0) {
     }
   }
 
+//control shift solenoid valve
 
-  //contorl DC relay 
+if(((counter/SHIFTTIME) % 2)  ==  1){
+
+  digitalWrite(49, 0);  //3
+  digitalWrite(50, 1);  //2
+  digitalWrite(51, 0);  //1
+  digitalWrite(52, 1);  //7
+  digitalWrite(53, 0);  //6
+}
+else{
+  digitalWrite(49, 1);  //3
+  digitalWrite(50, 0);  //2
+  digitalWrite(51, 1);  //1
+  digitalWrite(52, 0);  //7
+  digitalWrite(53, 1);  //6
+}
+
+  //control DC relay 
 #if 1
 if(duration>0){
-  if(duration>10){duration=10;}
+  //if(duration>10){duration=10;}
   duration--;
   digitalWrite(39, (msg[35]&BED_DN));  //7
   digitalWrite(40, (msg[35]&LEG_DN));  //6
@@ -337,11 +369,11 @@ else
   digitalWrite(46, (msg[36]&LEDR));  //6
   digitalWrite(47, (msg[36]&LEDB));  //5
   digitalWrite(48, (msg[36]&LEDG));  //4
-  digitalWrite(49, (msg[36]&SOL1));  //3
-  digitalWrite(50, (msg[36]&SOL2));  //2
-  digitalWrite(51, (msg[36]&SOL3));  //1
-  digitalWrite(52, (msg[37]&SOL4));  //7
-  digitalWrite(53, (msg[37]&SOL5));  //6
+  // digitalWrite(49, (msg[36]&SOL1));  //3
+  // digitalWrite(50, (msg[36]&SOL2));  //2
+  // digitalWrite(51, (msg[36]&SOL3));  //1
+  // digitalWrite(52, (msg[37]&SOL4));  //7
+  // digitalWrite(53, (msg[37]&SOL5));  //6
 
   if(((msg[37]&TVUP)==0) && ((msg[37]&TVDN)==0)){
 
