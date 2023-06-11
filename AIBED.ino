@@ -78,7 +78,8 @@ uint32_t onoffcounter = 0;
 uint8_t tmp_vol[2];
 
 double R1 = 7680;//value of R1 resistor. R2 is thermistor
-uint8_t msg[LENGTH] = {255,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,0,0,0,38,39,40,41,42,43,44};
+uint8_t msg[LENGTH] = {255,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+21,22,23,24,25,26,27,28,29,30,31,32,33,34,0,0,0,38,39,40,41,42,43,44};
 
 float dht_h;
 float dht_t;
@@ -147,7 +148,7 @@ void loop() {
   counter++;
   toogle ^= 1; 
   digitalWrite(LED_BUILTIN, toogle);  // turn the LED on (HIGH is the voltage level)
-#if 1
+#if 0
 //scan temp of thermistor//
   for(int i=10;i<16;i++){temp[i-10] = ThermisterScan(analogRead(i));}
 
@@ -398,31 +399,19 @@ else
       TVflag = 0;
     }
 
-    
-  
 #endif
 
-  
-  
   for(int j=0;j<5;j++)
   {
-    // Serial.print("volume[j]:");
-    // Serial.println(volume[j]);
-    tmp_vol[0] = volume[j]/10;
-    tmp_vol[1] = volume[j]%10;
-
     for(int i=0;i<5;i++){  
-      Serial1.print(tmp_vol[0]);
-      Serial1.print(tmp_vol[1]);
-      delay(5);
+      Serial1.print('s');
+      Serial1.print(j);
+      Serial1.print(volume[j]/10);
+      Serial1.print(volume[j]%10);
+      delay(10);
     }
   }
   
-
-  // if(toogle == 1){tmp_vol[1] = 4;tmp_vol[0] = 0;}//for test
-  // else{tmp_vol[1] = 5;tmp_vol[0] = 1;}//for test
-  
-
 
   //for(int i=0;i<LENGTH;i++){Serial.write(msg[i]);}//send msg to pc
   //send msg to pc
