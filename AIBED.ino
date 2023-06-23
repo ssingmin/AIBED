@@ -1,7 +1,7 @@
 
 /*todolist
 1. 침대 다중제어
-2. 220v 제어//조명, 펌프전원 , TV , 
+2. 220v 제어//조명, 펌프전원 , 모니터 , 산소발생기
 3. 485통신해결
 오프모드//공기가 없는상태
 온모드 //모두 빵빵한 상태
@@ -15,7 +15,7 @@
 #include "DHT.h"
 #include <Wire.h>
 
-#define SHIFTTIME 300// 5 MINUTES
+//#define SHIFTTIME 300// 5 MINUTES
 
 #define RELAY_STARTPIN 39
 #define RELAY_NUM 15
@@ -67,6 +67,9 @@
 Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
 
+uint32_t sol_func;
+uint32_t shifttime;
+
 const byte LimitSWPin = 3;
 
 uint8_t TVflag;
@@ -100,6 +103,151 @@ uint8_t rev_msg[9] = {0,};
 
 uint8_t volume[5] = {0,};
 
+void solfunc(int func)
+{
+
+    switch (func) {
+    case 1 : 
+      if((counter%7)==0){
+      digitalWrite(49, 1);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 0);  //sol5      
+      }
+      if((counter%7)==1){
+      digitalWrite(49, 1);  //sol1
+      digitalWrite(50, 1);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 0);  //sol5
+      }
+      if((counter%7)==2){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 1);  //sol2
+      digitalWrite(51, 1);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 0);  //sol5
+      }
+      if((counter%7)==3){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 1);  //sol3
+      digitalWrite(52, 1);  //sol4
+      digitalWrite(53, 0);  //sol5
+      }
+      if((counter%7)==4){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 1);  //sol4
+      digitalWrite(53, 1);  //sol5
+      }
+      if((counter%7)==5){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 1);  //sol5
+      }
+      if((counter%7)==6){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 0);  //sol5
+      }
+    
+    break;
+    
+    case 2 : 
+          if((counter%7)==0){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 1);  //sol5      
+      }
+      if((counter%7)==1){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 1);  //sol4
+      digitalWrite(53, 1);  //sol5
+      }
+      if((counter%7)==2){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 1);  //sol3
+      digitalWrite(52, 1);  //sol4
+      digitalWrite(53, 0);  //sol5
+      }
+      if((counter%7)==3){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 1);  //sol2
+      digitalWrite(51, 1);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 0);  //sol5
+      }
+      if((counter%7)==4){
+      digitalWrite(49, 1);  //sol1
+      digitalWrite(50, 1);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 0);  //sol5
+      }
+      if((counter%7)==5){
+      digitalWrite(49, 1);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 0);  //sol5
+      }
+      if((counter%7)==6){
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 0);  //sol5
+      }
+    break;
+
+    case 3 : 
+      digitalWrite(49, 1);  //sol1
+      digitalWrite(50, 1);  //sol2
+      digitalWrite(51, 1);  //sol3
+      digitalWrite(52, 1);  //sol4
+      digitalWrite(53, 1);  //sol5
+    break;
+    
+    case 4 : 
+      digitalWrite(49, 0);  //sol1
+      digitalWrite(50, 0);  //sol2
+      digitalWrite(51, 0);  //sol3
+      digitalWrite(52, 0);  //sol4
+      digitalWrite(53, 0);  //sol5
+    break;
+    
+    default : 
+    if(((counter/500) % 2)  ==  1){//solenoid
+    digitalWrite(49, 0);  //3
+    digitalWrite(50, 1);  //2
+    digitalWrite(51, 0);  //1
+    digitalWrite(52, 1);  //7
+    digitalWrite(53, 0);  //6
+    }
+    else{
+    digitalWrite(49, 1);  //3
+    digitalWrite(50, 0);  //2
+    digitalWrite(51, 1);  //1
+    digitalWrite(52, 0);  //7
+    digitalWrite(53, 1);  //6
+    }
+    break;
+  }
+
+
+}
 double ThermisterScan(int RawADC){
 
   double Temp;
@@ -148,7 +296,7 @@ void loop() {
   counter++;
   toogle ^= 1; 
   digitalWrite(LED_BUILTIN, toogle);  // turn the LED on (HIGH is the voltage level)
-#if 0
+#if 1
 //scan temp of thermistor//
   for(int i=10;i<16;i++){temp[i-10] = ThermisterScan(analogRead(i));}
 
@@ -305,6 +453,7 @@ if (Serial.available() > 0) {
       msg[42] = rev_msg[7];
 
       duration = rev_msg[8];
+      sol_func = msg[36]&0x0f;
 
       volume[0] = msg[38];//0~15
       volume[1] = msg[39];//0~15
@@ -321,7 +470,9 @@ if (Serial.available() > 0) {
 
 //control shift solenoid valve
 
-if(((counter/SHIFTTIME) % 2)  ==  1){
+#if 0
+
+if(((counter/SHIFTTIME) % 2)  ==  1){//solenoid
 
   digitalWrite(49, 0);  //3
   digitalWrite(50, 1);  //2
@@ -336,6 +487,10 @@ else{
   digitalWrite(52, 0);  //7
   digitalWrite(53, 1);  //6
 }
+#endif
+
+
+solfunc(sol_func);
 
   //control DC relay 
 #if 1
@@ -383,8 +538,8 @@ else
     digitalWrite(6, 0);//tv up stop
     digitalWrite(4, 0);
     digitalWrite(5, 0);//tv down stop
-      Serial.print("msgif[37]:"); 
-      Serial.println(msg[37]);   
+      // Serial.print("msgif[37]:"); 
+      // Serial.println(msg[37]);
       TVflag = 1; 
     }
 
@@ -403,7 +558,7 @@ else
 
   for(int j=0;j<5;j++)
   {
-    for(int i=0;i<5;i++){  
+    for(int i=0;i<3;i++){  
       Serial1.print('s');
       Serial1.print(j);
       Serial1.print(volume[j]/10);
@@ -421,7 +576,7 @@ else
     Serial.print(";");    
   }
   Serial.println();
-  delay(130);//for 1sec
+  delay(120);//for 1sec
 
 }
 
