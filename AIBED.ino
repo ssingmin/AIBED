@@ -1,4 +1,3 @@
-
 /*todolist
 1. 침대 다중제어
 2. 220v 제어//조명, 펌프전원 , 모니터 , 산소발생기
@@ -8,6 +7,7 @@
 교대부양모드// 135 24가 교차
 알람모드// 파도타기 
 ////////*/
+#include <MsTimer2.h>
 
 #include <Adafruit_ADS1X15.h>
 
@@ -17,8 +17,8 @@
 
 //#define SHIFTTIME 300// 5 MINUTES
 
-#define RELAY_STARTPIN 39
-#define RELAY_NUM 15
+#define RELAY_STARTPIN 37
+#define RELAY_NUM 17
 // the setup function runs once when you press reset or power the board
 
 #define THERCONST_A 0.9766319919e-03
@@ -30,6 +30,8 @@
 
 #define LENGTH 45
 
+#define PUMPON 37
+#define UNIT 38//PSI VAR
 
   //msg[35]
 // #define BODY_UP 0x80
@@ -67,6 +69,20 @@
 Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
 
+uint8_t pumponflag = 0;
+
+uint8_t flag_holdsol = 1;
+uint8_t flag_defaultsol = 0;
+
+uint8_t cnt_solrst = 0;
+uint8_t solflag = 0;
+
+uint32_t cnt_cycle=0;
+uint32_t cnt_sol=9;
+//uint32_t sol_delay=0;
+uint32_t pre_cnt_sol=0;
+uint32_t post_cnt_sol=0;
+
 uint32_t sol_func;
 uint32_t shifttime;
 
@@ -103,116 +119,140 @@ uint8_t rev_msg[9] = {0,};
 
 uint8_t volume[5] = {0,};
 
-void solfunc(int func)
+void pushbtn(int i)
 {
 
+  i-=37;
+  if(i==0)
+    {
+      digitalWrite(PUMPON, HIGH);  // turn the LED on (HIGH is the voltage level)
+      delay(150);
+      digitalWrite(PUMPON, LOW);  // turn the LED on (HIGH is the voltage level)
+    }
+    if(i==1)
+    {
+      digitalWrite(UNIT, HIGH);  // turn the LED on (HIGH is the voltage level)
+      delay(150);
+      digitalWrite(UNIT, LOW);  // turn the LED on (HIGH is the voltage level)
+    }
+
+}
+
+void pushbtndelay(int i, uint32_t sol_delay)
+{
+  i-=37;
+    
+  if(cnt_sol>sol_delay){
+    cnt_sol=0;
+    if(i==0)
+    {
+      digitalWrite(PUMPON, HIGH);  // turn the LED on (HIGH is the voltage level)
+      delay(130);
+      digitalWrite(PUMPON, LOW);  // turn the LED on (HIGH is the voltage level)
+    }
+    if(i==1)
+    {
+      digitalWrite(UNIT, HIGH);  // turn the LED on (HIGH is the voltage level)
+      delay(130);
+      digitalWrite(UNIT, LOW);  // turn the LED on (HIGH is the voltage level)
+    }
+  }
+}
+void solfunc(int func)
+{
+//37=on 38=unit
+if(cnt_solrst == 0){cnt_solrst = 1;}
+    
     switch (func) {
     case 1 : 
-      if((counter%7)==0){
+      
+      if((counter%5)==0){
+        solflag=1;
+      pushbtn(PUMPON);
       digitalWrite(49, 1);  //sol1
       digitalWrite(50, 0);  //sol2
       digitalWrite(51, 0);  //sol3
       digitalWrite(52, 0);  //sol4
       digitalWrite(53, 0);  //sol5      
       }
-      if((counter%7)==1){
-      digitalWrite(49, 1);  //sol1
+      if((counter%5)==1){
+      digitalWrite(49, 0);  //sol1
       digitalWrite(50, 1);  //sol2
       digitalWrite(51, 0);  //sol3
       digitalWrite(52, 0);  //sol4
       digitalWrite(53, 0);  //sol5
       }
-      if((counter%7)==2){
+      if((counter%5)==2){
       digitalWrite(49, 0);  //sol1
-      digitalWrite(50, 1);  //sol2
+      digitalWrite(50, 0);  //sol2
       digitalWrite(51, 1);  //sol3
       digitalWrite(52, 0);  //sol4
       digitalWrite(53, 0);  //sol5
       }
-      if((counter%7)==3){
-      digitalWrite(49, 0);  //sol1
-      digitalWrite(50, 0);  //sol2
-      digitalWrite(51, 1);  //sol3
-      digitalWrite(52, 1);  //sol4
-      digitalWrite(53, 0);  //sol5
-      }
-      if((counter%7)==4){
+      if((counter%5)==3){
       digitalWrite(49, 0);  //sol1
       digitalWrite(50, 0);  //sol2
       digitalWrite(51, 0);  //sol3
       digitalWrite(52, 1);  //sol4
-      digitalWrite(53, 1);  //sol5
+      digitalWrite(53, 0);  //sol5
       }
-      if((counter%7)==5){
+      if((counter%5)==4){
       digitalWrite(49, 0);  //sol1
       digitalWrite(50, 0);  //sol2
       digitalWrite(51, 0);  //sol3
       digitalWrite(52, 0);  //sol4
       digitalWrite(53, 1);  //sol5
-      }
-      if((counter%7)==6){
-      digitalWrite(49, 0);  //sol1
-      digitalWrite(50, 0);  //sol2
-      digitalWrite(51, 0);  //sol3
-      digitalWrite(52, 0);  //sol4
-      digitalWrite(53, 0);  //sol5
+      solflag=0;
       }
     
     break;
     
     case 2 : 
-          if((counter%7)==0){
+    
+      if((counter%5)==0){
+        solflag=2;
+        pushbtn(PUMPON);
       digitalWrite(49, 0);  //sol1
       digitalWrite(50, 0);  //sol2
       digitalWrite(51, 0);  //sol3
       digitalWrite(52, 0);  //sol4
       digitalWrite(53, 1);  //sol5      
       }
-      if((counter%7)==1){
+      if((counter%5)==1){
       digitalWrite(49, 0);  //sol1
       digitalWrite(50, 0);  //sol2
       digitalWrite(51, 0);  //sol3
       digitalWrite(52, 1);  //sol4
       digitalWrite(53, 1);  //sol5
       }
-      if((counter%7)==2){
+      if((counter%5)==2){
       digitalWrite(49, 0);  //sol1
       digitalWrite(50, 0);  //sol2
       digitalWrite(51, 1);  //sol3
       digitalWrite(52, 1);  //sol4
       digitalWrite(53, 0);  //sol5
       }
-      if((counter%7)==3){
+      if((counter%5)==3){
       digitalWrite(49, 0);  //sol1
       digitalWrite(50, 1);  //sol2
       digitalWrite(51, 1);  //sol3
       digitalWrite(52, 0);  //sol4
       digitalWrite(53, 0);  //sol5
       }
-      if((counter%7)==4){
+      if((counter%5)==4){
       digitalWrite(49, 1);  //sol1
       digitalWrite(50, 1);  //sol2
       digitalWrite(51, 0);  //sol3
       digitalWrite(52, 0);  //sol4
       digitalWrite(53, 0);  //sol5
+      solflag=0;
       }
-      if((counter%7)==5){
-      digitalWrite(49, 1);  //sol1
-      digitalWrite(50, 0);  //sol2
-      digitalWrite(51, 0);  //sol3
-      digitalWrite(52, 0);  //sol4
-      digitalWrite(53, 0);  //sol5
-      }
-      if((counter%7)==6){
-      digitalWrite(49, 0);  //sol1
-      digitalWrite(50, 0);  //sol2
-      digitalWrite(51, 0);  //sol3
-      digitalWrite(52, 0);  //sol4
-      digitalWrite(53, 0);  //sol5
-      }
+
     break;
 
     case 3 : 
+    
+    if(flag_holdsol == 1){pushbtn(PUMPON);flag_holdsol=0;}
       digitalWrite(49, 1);  //sol1
       digitalWrite(50, 1);  //sol2
       digitalWrite(51, 1);  //sol3
@@ -229,7 +269,17 @@ void solfunc(int func)
     break;
     
     default : 
-    if(((counter/500) % 2)  ==  1){//solenoid
+    flag_holdsol = 1;
+    if(solflag == 0){
+
+    
+    //pushbtndelay(PUMPON, 20);
+    if(((counter/60) % 2)  ==  1){//solenoid
+          if(flag_defaultsol==1){
+        pushbtn(PUMPON);
+        pumponflag=1;
+        flag_defaultsol=0;   
+      }
     digitalWrite(49, 0);  //3
     digitalWrite(50, 1);  //2
     digitalWrite(51, 0);  //1
@@ -237,12 +287,19 @@ void solfunc(int func)
     digitalWrite(53, 0);  //6
     }
     else{
+      if(flag_defaultsol==0){
+        pushbtn(PUMPON);
+        pumponflag=1;
+        flag_defaultsol=1;
+      }
     digitalWrite(49, 1);  //3
     digitalWrite(50, 0);  //2
     digitalWrite(51, 1);  //1
     digitalWrite(52, 0);  //7
     digitalWrite(53, 1);  //6
+    }      
     }
+
     break;
   }
 
@@ -279,6 +336,7 @@ void setup() {
   pinMode(4, OUTPUT);
   pinMode(5, OUTPUT);
   pinMode(6, OUTPUT);
+
   dht.begin();
 
   ads1115.begin();  // Initialize ads1115 at address 0x49
@@ -288,12 +346,15 @@ void setup() {
 
   pinMode(LimitSWPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(LimitSWPin), LimitSW, FALLING);
-  
+  MsTimer2::set(1000,timerISR);  
+  MsTimer2::start();
+  digitalWrite(PUMPON, LOW);  // turn the LED on (HIGH is the voltage level)
+
 }
 
 
 void loop() {
-  counter++;
+
   toogle ^= 1; 
   digitalWrite(LED_BUILTIN, toogle);  // turn the LED on (HIGH is the voltage level)
 #if 1
@@ -489,8 +550,22 @@ else{
 }
 #endif
 
+if(solflag==1){solfunc(solflag);}
+else if(solflag==2){solfunc(solflag);}
+else solfunc(sol_func);
 
-solfunc(sol_func);
+
+if((cnt_solrst>12)&&(pumponflag==1))
+{
+  cnt_solrst=0;
+  pushbtn(PUMPON);
+  Serial.println("pushbtn\n!!");
+  pumponflag=0;
+}
+if(cnt_solrst>12){cnt_solrst=0;}
+
+Serial.println(cnt_solrst);
+
 
   //control DC relay 
 #if 1
@@ -563,7 +638,7 @@ else
       Serial1.print(j);
       Serial1.print(volume[j]/10);
       Serial1.print(volume[j]%10);
-      delay(10);
+      delay(5);
     }
   }
   
@@ -576,7 +651,15 @@ else
     Serial.print(";");    
   }
   Serial.println();
-  delay(120);//for 1sec
+  
+  while(1){
+    delay(1);
+    if(cnt_cycle>0){
+      cnt_cycle=0;
+      break;
+      }
+  }
+  
 
 }
 
@@ -587,3 +670,10 @@ else
   duration = 0;
   }
   
+  void timerISR(){
+  cnt_cycle++;
+  cnt_sol++;
+    counter++;
+    
+    if(cnt_solrst>0){cnt_solrst++;}
+  }
