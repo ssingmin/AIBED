@@ -279,7 +279,7 @@ void solfunc(int func)
 
     
     //pushbtndelay(PUMPON, 20);
-    if(((counter/60) % 2)  ==  1){//solenoid
+    if(((counter/300) % 2)  ==  1){//solenoid
           if(flag_defaultsol==1){
         pushbtn(PUMPON);
         pumponflag=1;
@@ -566,12 +566,12 @@ if((cnt_solrst>12)&&(pumponflag==1))
 {
   cnt_solrst=0;
   pushbtn(PUMPON);
-  Serial.println("pushbtn\n!!");
+  //Serial.println("pushbtn\n!!");
   pumponflag=0;
 }
 //if(cnt_solrst>12){cnt_solrst=0;}
 
-Serial.println(cnt_solrst);
+//Serial.println(cnt_solrst);
 
 
   //control DC relay 
@@ -671,7 +671,7 @@ else
 }
 
   void LimitSW() {
-  Serial.println("irq danger!!");
+  //Serial.println("irq danger!!");
 //  digitalWrite(43, 0);  //3
   digitalWrite(44, 0);  //3
   duration = 0;
