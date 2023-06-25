@@ -161,14 +161,18 @@ void pushbtndelay(int i, uint32_t sol_delay)
 void solfunc(int func)
 {
 //37=on 38=unit
-if(cnt_solrst == 0){cnt_solrst = 1;}
+//if(cnt_solrst == 0){cnt_solrst = 1;}
     
     switch (func) {
     case 1 : 
       
       if((counter%5)==0){
         solflag=1;
-      pushbtn(PUMPON);
+      if(cnt_solrst>0){
+        pushbtn(PUMPON);
+      }
+      
+      cnt_solrst = 1;
       digitalWrite(49, 1);  //sol1
       digitalWrite(50, 0);  //sol2
       digitalWrite(51, 0);  //sol3
@@ -212,6 +216,7 @@ if(cnt_solrst == 0){cnt_solrst = 1;}
       if((counter%5)==0){
         solflag=2;
         pushbtn(PUMPON);
+        cnt_solrst = 1;
       digitalWrite(49, 0);  //sol1
       digitalWrite(50, 0);  //sol2
       digitalWrite(51, 0);  //sol3
@@ -278,6 +283,7 @@ if(cnt_solrst == 0){cnt_solrst = 1;}
           if(flag_defaultsol==1){
         pushbtn(PUMPON);
         pumponflag=1;
+        cnt_solrst = 1;
         flag_defaultsol=0;   
       }
     digitalWrite(49, 0);  //3
@@ -290,6 +296,7 @@ if(cnt_solrst == 0){cnt_solrst = 1;}
       if(flag_defaultsol==0){
         pushbtn(PUMPON);
         pumponflag=1;
+        cnt_solrst = 1;
         flag_defaultsol=1;
       }
     digitalWrite(49, 1);  //3
@@ -562,7 +569,7 @@ if((cnt_solrst>12)&&(pumponflag==1))
   Serial.println("pushbtn\n!!");
   pumponflag=0;
 }
-if(cnt_solrst>12){cnt_solrst=0;}
+//if(cnt_solrst>12){cnt_solrst=0;}
 
 Serial.println(cnt_solrst);
 
