@@ -586,7 +586,7 @@ if(duration>0){
   digitalWrite(43, (msg[35]&LEG_UP));  //3
   if(digitalRead(LimitSWPin))
   {
-    Serial.print("danger!!");
+    //Serial.print("danger!!");
     digitalWrite(44, (msg[35]&BED_UP));  //2
   }
 
