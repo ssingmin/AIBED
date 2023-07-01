@@ -631,8 +631,8 @@ else
       delay(100);
       digitalWrite(6, 0);  
       digitalWrite(5, 0); 
-      Serial.print("msgelse[37]:"); 
-      Serial.println(msg[37]);
+      // Serial.print("msgelse[37]:"); 
+      // Serial.println(msg[37]);
       TVflag = 0;
     }
 
