@@ -68,6 +68,8 @@
 
 Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
+int memflag = 0;
+int pre_memflag = 0;
 
 uint8_t LimitSW_flag = 0;
 uint8_t pumponflag = 0;
@@ -615,28 +617,35 @@ else
   // digitalWrite(52, (msg[37]&SOL4));  //7
   // digitalWrite(53, (msg[37]&SOL5));  //6
 
-  if(((msg[37]&TVUP)==0) && ((msg[37]&TVDN)==0)){
+    if (((msg[37]&TVUP)!=0) || ((msg[37]&TVDN)!=0)){
+      memflag = msg[37];
+      if((memflag != pre_memflag)){
+            pre_memflag = memflag;
+      TVflag = 2;  
+      }
+    }
 
+  if(((((msg[37]&TVUP)==0) && ((msg[37]&TVDN)==0))  &&  (TVflag==0))||(TVflag==2)){
+    
     digitalWrite(4, 1);
-    delay(100);
-    digitalWrite(6, 0);//tv up stop
+    delay(300);
     digitalWrite(4, 0);
-    digitalWrite(5, 0);//tv down stop
-      // Serial.print("msgif[37]:"); 
-      // Serial.println(msg[37]);
       TVflag = 1; 
     }
 
-    if((((msg[37]&TVUP)!=0) || ((msg[37]&TVDN)!=0))  &&  (TVflag==1)){
+    else if ((((msg[37]&TVUP)!=0) || ((msg[37]&TVDN)!=0))  &&  (TVflag==1)){
+
       digitalWrite(6, (msg[37]&TVUP));  
       digitalWrite(5, (msg[37]&TVDN)); 
-      delay(100);
+      delay(300);
       digitalWrite(6, 0);  
       digitalWrite(5, 0); 
      // Serial.print("msgelse[37]:"); 
       //Serial.println(msg[37]);
       TVflag = 0;
+
     }
+
 
 #endif
 
