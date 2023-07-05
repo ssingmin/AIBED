@@ -12,7 +12,7 @@
 #include <Adafruit_ADS1X15.h>
 
 #include <math.h>
-#include "DHT.h"
+#include <DHT.h>
 #include <Wire.h>
 
 //#define SHIFTTIME 300// 5 MINUTES
@@ -69,6 +69,7 @@
 Adafruit_ADS1115 ads1115;	// Construct an ads1115 
 DHT dht(DHTPIN, DHTTYPE);
 
+uint8_t LimitSW_flag = 0;
 uint8_t pumponflag = 0;
 
 uint8_t flag_holdsol = 1;
@@ -587,6 +588,7 @@ if(duration>0){
   if(digitalRead(LimitSWPin))
   {
     //Serial.print("danger!!");
+    // LimitSW_flag = msg[35]&BED_UP;
     digitalWrite(44, (msg[35]&BED_UP));  //2
   }
 
@@ -631,8 +633,8 @@ else
       delay(100);
       digitalWrite(6, 0);  
       digitalWrite(5, 0); 
-      Serial.print("msgelse[37]:"); 
-      Serial.println(msg[37]);
+     // Serial.print("msgelse[37]:"); 
+      //Serial.println(msg[37]);
       TVflag = 0;
     }
 
@@ -674,7 +676,11 @@ else
   //Serial.println("irq danger!!");
 //  digitalWrite(43, 0);  //3
   digitalWrite(44, 0);  //3
-  duration = 0;
+  if(msg[35]&BED_UP == 1){
+    duration = 0;
+    // LimitSW_flag=0;
+  }
+
   }
   
   void timerISR(){
